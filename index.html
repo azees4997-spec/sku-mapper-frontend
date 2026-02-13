@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SKU Mapper</title>
+  <style>
+    body { font-family: Arial; margin:20px; }
+    .container { display:flex; gap:30px; }
+    .col { width:45%; }
+    .item { padding:6px; border-bottom:1px solid #ddd; cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<h2>Upload CSV File</h2>
+<input type="file" id="fileInput"><br><br>
+
+<div class="container">
+  <div class="col" id="left"></div>
+  <div class="col" id="right"></div>
+</div>
+
+<script>
+
+const BACKEND = "https://sku-mapper-backend.onrender.com/match";
+
+let items = [];
+
+document.getElementById("fileInput").addEventListener("change", function(e){
+    const reader = new FileReader();
+    reader.onload = function(){
+        items = reader.result.split("\n").filter(x => x.trim() !== "");
+        renderLeft();
+    };
+    reader.readAsText(e.target.files[0]);
+});
+
+function renderLeft(){
+    let html = "<h3>Uploaded Items</h3>";
+    items.forEach(item=>{
+        html += `<div class="item" onclick="fetchMatch('${item}')">${item}</div>`;
+    });
+    document.getElementById("left").innerHTML = html;
+}
+
+async function fetchMatch(item){
+    const response = await fetch(BACKEND + "?item=" + encodeURIComponent(item), {
+        method:"POST"
+    });
+
+    const data = await response.json();
+
+    let html = "<h3>Suggestions</h3>";
+    data.matches.forEach(m=>{
+        html += `<div class="item">${m.name} (${m.score})</div>`;
+    });
+
+    document.getElementById("right").innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
